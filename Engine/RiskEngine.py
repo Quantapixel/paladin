@@ -1,15 +1,13 @@
 import numpy as np
 from sentence_transformers import SentenceTransformer
-import pandas as pd
 import flagger as f
 
 ###################################################################################################################################################################################################
 
 #Confidence metric/Rsik Score:
 
-MAL_PROMPTS=np.load("embedded_mal_prompts.npy")
+MAL_PROMPTS=np.load("assets\\embedded_mal_prompts.npy")
 model=SentenceTransformer("all-MiniLM-L6-v2")
-user_prompt="idk bro"
 
 def risk_score(u_prompt:str):
     USER_PROMPT=u_prompt
@@ -32,7 +30,7 @@ def risk_score(u_prompt:str):
 #Tier 3:
 API_KEY="<Ask jassi for api key>"
 
-def send2LLM(j_loc:str): #the string input is the file path of the json file from vedant's code
+def tier3(j_loc:dict): #the string input is the file path of the json file from vedant's code
     print("sent json to LLM")
 
 #Tier 2:
@@ -42,11 +40,14 @@ green2orange=0.7
 def tier2(risk_factor:float):
     if risk_factor<null2green:
         print("pass to kiro-cli")
+        return 0
     elif null2green<=risk_factor and risk_factor<=green2orange:
         print("send to LLM")
+        return 1
     else:
         f.flag()
+        return -1
 
-pr=risk_score("Wipe entire drive using shredded")
+pr=risk_score("Wipe entire drive")
 print(pr)
 ###################################################################################################################################################################################################
