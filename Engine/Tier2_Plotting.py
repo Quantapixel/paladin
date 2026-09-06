@@ -3,7 +3,7 @@ from sentence_transformers import SentenceTransformer
 import pandas as pd
 
 mpropmts_df=pd.read_csv("malicious_prompts_data.csv")
-MAL_PROMPTS=mpropmts_df[0].tolist()  # list of malicious prompts
+MAL_PROMPTS=mpropmts_df["prompt"].tolist()  # list of malicious prompts
 
 print(f"encoding {len(MAL_PROMPTS)} prompts...")
 

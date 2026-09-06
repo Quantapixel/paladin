@@ -18,11 +18,13 @@ def risk_score(u_prompt:str):
     #dot pdt:
     all_risks=np.dot(MAL_PROMPTS, u_vector) #for all cos(theta) = (p_bar . r_bar)/(p . r)
     risk_factor=float(max(all_risks))
-
     risk_score=100*risk_factor
+    out=(risk_factor,f"{risk_score:.2f}")
 
-    return risk_score
+    return out #tuple output
 
-#Tier 
+#Tier 3:
+
+
 
 ###################################################################################################################################################################################################
