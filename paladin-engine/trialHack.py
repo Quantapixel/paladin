@@ -14,15 +14,45 @@ All fields except 'prompt' and 'action' are optional.
 Examples:
   python trialHack.py "prompt=req-001 agent=kiro action=file_read target=/home/user/project/src/main.py cwd=/home/user/project os=linux shell=bash parent=kiro-cli user=jaskaran project=/home/user/project"
   echo "prompt=req-002 action=file_read target=/home/user/.ssh" | python trialHack.py
+
+Output:
+  Results are automatically saved to trialHack_output.csv in the current directory.
+  Each run appends a new row with a timestamp.
 """
 
 import sys
 import re
 import json
+import csv
+import os
+from datetime import datetime
 
 from paladin.context.engine import ContextEngine
 from paladin.context.history import ActionHistory
 from paladin.schemas.action import AgentAction
+
+# ── CSV output path ────────────────────────────────────────────────────────────
+CSV_OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trialHack_output.csv")
+
+CSV_FIELDNAMES = [
+    "timestamp",
+    "prompt_id",
+    "action_type",
+    "target",
+    "agent",
+    "sensitivity",
+    "target_category",
+    "is_outside_project",
+    "recent_actions",
+    "flagged",
+    "flag_reasons",
+    "cwd",
+    "os",
+    "shell",
+    "user",
+    "project_root",
+    "task_context",
+]
 
 
 # ── Step 1: Receive string prompt ─────────────────────────────────────────────
@@ -109,7 +139,8 @@ def json_to_agent_action(data: dict) -> AgentAction:
 
 
 # ── Sensitivity thresholds that count as a "flag" ─────────────────────────────
-FLAGGED_SENSITIVITIES = {"high", "critical"}
+# Engine produces: "normal" | "sensitive" | "critical"
+FLAGGED_SENSITIVITIES = {"sensitive", "critical"}
 
 def check_flags(ctx, prompt_id: str, target: str) -> list[str]:
     """
@@ -121,20 +152,61 @@ def check_flags(ctx, prompt_id: str, target: str) -> list[str]:
     sensitivity = str(ctx.sensitivity).lower()
     if sensitivity in FLAGGED_SENSITIVITIES:
         reasons.append(
-            f"sensitivity is '{ctx.sensitivity}' — prompt '{prompt_id}' "
+            f"sensitivity is '{ctx.sensitivity}' -- prompt '{prompt_id}' "
             f"tried to access a {ctx.target_category} resource: {target!r}"
         )
 
     if ctx.is_outside_project:
         reasons.append(
-            f"target is outside the project root — prompt '{prompt_id}' "
+            f"target is outside the project root -- prompt '{prompt_id}' "
             f"accessed {target!r} which is not under the project directory"
         )
 
     return reasons
 
 
-# ── Step 4: Run engine & display (same format as original) ────────────────────
+# ── Step 4: Save result row to CSV ────────────────────────────────────────────
+
+def save_to_csv(data: dict, ctx, flags: list[str]) -> None:
+    """Append a result row to trialHack_output.csv, creating the file if needed."""
+    prompt_id   = data.get("prompt", "unknown")
+    action_type = data.get("action_type", "unknown")
+    target      = data.get("target", "N/A")
+
+    recent = ctx.recent_actions
+    recent_count = recent if isinstance(recent, int) else len(recent)
+
+    row = {
+        "timestamp":          datetime.now().isoformat(timespec="seconds"),
+        "prompt_id":          prompt_id,
+        "action_type":        action_type,
+        "target":             target,
+        "agent":              data.get("agent", "unknown"),
+        "sensitivity":        str(ctx.sensitivity),
+        "target_category":    str(ctx.target_category),
+        "is_outside_project": ctx.is_outside_project,
+        "recent_actions":     recent_count,
+        "flagged":            bool(flags),
+        "flag_reasons":       " | ".join(flags) if flags else "",
+        "cwd":                data.get("cwd", ""),
+        "os":                 data.get("os", ""),
+        "shell":              data.get("shell", ""),
+        "user":               data.get("user", ""),
+        "project_root":       data.get("project_root", ""),
+        "task_context":       data.get("task_context", ""),
+    }
+
+    file_exists = os.path.isfile(CSV_OUTPUT_PATH)
+    with open(CSV_OUTPUT_PATH, "a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_FIELDNAMES)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(row)
+
+    print(f"  [saved] {CSV_OUTPUT_PATH}")
+
+
+# ── Step 5: Run engine & display (same format as original) ────────────────────
 
 def run_and_display(engine: ContextEngine, data: dict, index: int, total: int) -> None:
     action = json_to_agent_action(data)
@@ -157,11 +229,14 @@ def run_and_display(engine: ContextEngine, data: dict, index: int, total: int) -
     flags = check_flags(ctx, prompt_id, target)
     if flags:
         print()
-        print(f"  ⚠  FLAGGED — prompt '{prompt_id}' caused the following issue(s):")
+        print(f"  [FLAGGED] prompt '{prompt_id}' caused the following issue(s):")
         for reason in flags:
-            print(f"     • {reason}")
+            print(f"     - {reason}")
     else:
-        print(f"  ✓  prompt '{prompt_id}' passed — no issues detected")
+        print(f"  [PASS] prompt '{prompt_id}' passed -- no issues detected")
+
+    # ── Auto-save to CSV ──────────────────────────────────────────────────────
+    save_to_csv(data, ctx, flags)
 
     print()
 
@@ -179,7 +254,7 @@ def main() -> None:
     # Convert string prompt → JSON
     structured_json = parse_prompt_to_json(raw_prompt)
 
-    print("── Parsed JSON from prompt ──────────────────────────────")
+    print("-- Parsed JSON from prompt --")
     print(json.dumps(structured_json, indent=2))
     print()
 
