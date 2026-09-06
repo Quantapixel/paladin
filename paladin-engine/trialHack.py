@@ -36,22 +36,13 @@ CSV_OUTPUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tria
 
 CSV_FIELDNAMES = [
     "timestamp",
-    "prompt_id",
+    "raw_prompt",
     "action_type",
     "target",
     "agent",
     "sensitivity",
     "target_category",
-    "is_outside_project",
-    "recent_actions",
-    "flagged",
-    "flag_reasons",
     "cwd",
-    "os",
-    "shell",
-    "user",
-    "project_root",
-    "task_context",
 ]
 
 
@@ -167,33 +158,21 @@ def check_flags(ctx, prompt_id: str, target: str) -> list[str]:
 
 # ── Step 4: Save result row to CSV ────────────────────────────────────────────
 
-def save_to_csv(data: dict, ctx, flags: list[str]) -> None:
+def save_to_csv(data: dict, ctx, raw_prompt: str) -> None:
     """Append a result row to trialHack_output.csv, creating the file if needed."""
     prompt_id   = data.get("prompt", "unknown")
     action_type = data.get("action_type", "unknown")
     target      = data.get("target", "N/A")
 
-    recent = ctx.recent_actions
-    recent_count = recent if isinstance(recent, int) else len(recent)
-
     row = {
-        "timestamp":          datetime.now().isoformat(timespec="seconds"),
-        "prompt_id":          prompt_id,
-        "action_type":        action_type,
-        "target":             target,
-        "agent":              data.get("agent", "unknown"),
-        "sensitivity":        str(ctx.sensitivity),
-        "target_category":    str(ctx.target_category),
-        "is_outside_project": ctx.is_outside_project,
-        "recent_actions":     recent_count,
-        "flagged":            bool(flags),
-        "flag_reasons":       " | ".join(flags) if flags else "",
-        "cwd":                data.get("cwd", ""),
-        "os":                 data.get("os", ""),
-        "shell":              data.get("shell", ""),
-        "user":               data.get("user", ""),
-        "project_root":       data.get("project_root", ""),
-        "task_context":       data.get("task_context", ""),
+        "timestamp":       datetime.now().isoformat(timespec="seconds"),
+        "raw_prompt":      raw_prompt,
+        "action_type":     action_type,
+        "target":          target,
+        "agent":           data.get("agent", "unknown"),
+        "sensitivity":     str(ctx.sensitivity),
+        "target_category": str(ctx.target_category),
+        "cwd":             data.get("cwd", ""),
     }
 
     file_exists = os.path.isfile(CSV_OUTPUT_PATH)
@@ -208,7 +187,7 @@ def save_to_csv(data: dict, ctx, flags: list[str]) -> None:
 
 # ── Step 5: Run engine & display (same format as original) ────────────────────
 
-def run_and_display(engine: ContextEngine, data: dict, index: int, total: int) -> None:
+def run_and_display(engine: ContextEngine, data: dict, raw_prompt: str, index: int, total: int) -> None:
     action = json_to_agent_action(data)
     ctx = engine.build_context(action)
 
@@ -216,14 +195,10 @@ def run_and_display(engine: ContextEngine, data: dict, index: int, total: int) -
     action_type = data.get("action_type", "unknown")
     target      = data.get("target", "N/A")
 
-    recent = ctx.recent_actions
-    recent_count = recent if isinstance(recent, int) else len(recent)
-
     print(f"=== ACTION {index}: prompt={prompt_id!r}  type={action_type}  target={target} ===")
+    print(f"  raw_prompt       : {raw_prompt}")
     print(f"  sensitivity      : {ctx.sensitivity}")
     print(f"  target_category  : {ctx.target_category}")
-    print(f"  is_outside_project: {ctx.is_outside_project}")
-    print(f"  recent_actions   : {recent_count} action(s) before this")
 
     # ── Flag report ───────────────────────────────────────────────────────────
     flags = check_flags(ctx, prompt_id, target)
@@ -236,7 +211,7 @@ def run_and_display(engine: ContextEngine, data: dict, index: int, total: int) -
         print(f"  [PASS] prompt '{prompt_id}' passed -- no issues detected")
 
     # ── Auto-save to CSV ──────────────────────────────────────────────────────
-    save_to_csv(data, ctx, flags)
+    save_to_csv(data, ctx, raw_prompt)
 
     print()
 
@@ -259,7 +234,7 @@ def main() -> None:
     print()
 
     engine = ContextEngine(action_history=ActionHistory())
-    run_and_display(engine, structured_json, index=1, total=1)
+    run_and_display(engine, structured_json, raw_prompt, index=1, total=1)
 
 
 if __name__ == "__main__":
