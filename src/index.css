@@ -1,0 +1,187 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TOKEN SYSTEM
+   All colours live here as CSS custom properties.
+   Components reference var(--bg-0) etc — never hardcoded hex.
+   The [data-theme="light"] block overrides every token for light mode.
+───────────────────────────────────────────────────────────────────────────── */
+
+:root,
+[data-theme="dark"] {
+  /* Backgrounds — same hue, stepped further apart for visible layering */
+  --bg-0:   #060708;   /* page / deepest */
+  --bg-1:   #0c0e10;   /* sidebar, panel */
+  --bg-2:   #121416;   /* card bg — clearly distinct from bg-1 */
+  --bg-3:   #181b1e;   /* elevated / input */
+  --bg-4:   #1e2226;   /* hover */
+
+  /* Borders — more visible */
+  --border:        #2c3138;
+  --border-subtle: #20262c;
+
+  /* Text — more contrast steps between levels */
+  --text-0: #f2f5f7;   /* primary — near white, high contrast */
+  --text-1: #b8c2cc;   /* secondary — clearly legible, not washed out */
+  --text-2: #6e7a86;   /* muted — still readable, not invisible */
+
+  /* Status colours — same hues, slightly brighter for dark bg */
+  --green:        #34d874;
+  --green-dim:    rgba(52,216,116,0.12);
+  --green-border: rgba(52,216,116,0.28);
+
+  --amber:        #f5a623;
+  --amber-dim:    rgba(245,166,35,0.12);
+  --amber-border: rgba(245,166,35,0.28);
+
+  --red:        #f0615e;
+  --red-dim:    rgba(240,97,94,0.12);
+  --red-border: rgba(240,97,94,0.28);
+
+  --blue:        #5b9cf6;
+  --blue-dim:    rgba(91,156,246,0.12);
+  --blue-border: rgba(91,156,246,0.28);
+
+  /* Scrollbar */
+  --scrollbar-thumb: #2c3138;
+  --scrollbar-hover: #363d45;
+}
+
+[data-theme="light"] {
+  /* Backgrounds — white base with crisper layer separation */
+  --bg-0:   #eef1f5;   /* page — cool off-white, not pure grey */
+  --bg-1:   #ffffff;   /* sidebar, panel — pure white */
+  --bg-2:   #f2f5f8;   /* card bg — clearly distinct from bg-1 */
+  --bg-3:   #e6eaee;   /* elevated / input — noticeable inset */
+  --bg-4:   #d8dde3;   /* hover — obvious */
+
+  /* Borders — stronger, clearly visible */
+  --border:        #bcc3cb;
+  --border-subtle: #cdd4db;
+
+  /* Text — much stronger contrast hierarchy */
+  --text-0: #0d1117;   /* primary — near black, very high contrast */
+  --text-1: #374151;   /* secondary — dark grey, clearly readable */
+  --text-2: #6b7685;   /* muted — dark enough for WCAG AA on white */
+
+  /* Status — deeper for legibility on white backgrounds */
+  --green:        #16a34a;
+  --green-dim:    rgba(22,163,74,0.09);
+  --green-border: rgba(22,163,74,0.25);
+
+  --amber:        #c2760a;
+  --amber-dim:    rgba(194,118,10,0.09);
+  --amber-border: rgba(194,118,10,0.25);
+
+  --red:        #c8293a;
+  --red-dim:    rgba(200,41,58,0.09);
+  --red-border: rgba(200,41,58,0.25);
+
+  --blue:        #1d4ed8;
+  --blue-dim:    rgba(29,78,216,0.09);
+  --blue-border: rgba(29,78,216,0.25);
+
+  /* Scrollbar */
+  --scrollbar-thumb: #bcc3cb;
+  --scrollbar-hover: #a8b0b9;
+}
+
+/* ── Reset ────────────────────────────────────────────────────────────────── */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 3px; height: 3px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--scrollbar-thumb); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
+
+/* ── Typography ───────────────────────────────────────────────────────────── */
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ── Form element resets ──────────────────────────────────────────────────── */
+input, textarea, select {
+  background: var(--bg-3);
+  color: var(--text-0);
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-2);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--border-subtle) !important;
+  box-shadow: 0 0 0 2px rgba(91,156,246,0.08);
+}
+
+select option {
+  background: var(--bg-2);
+  color: var(--text-0);
+}
+
+/* ── Theme transition — smooth but fast ───────────────────────────────────── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, opacity;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+/* Don't animate layout properties */
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}
+
+/* ── Session page responsive layout ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .session-tabs {
+    display: flex !important;
+    background: var(--bg-1);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .session-layout        { flex-direction: column !important; height: auto !important; }
+  .session-panel         { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border); }
+  .session-panel-hidden  { display: none !important; }
+  .session-panel-security { width: 100% !important; }
+}
+
+@media (min-width: 769px) {
+  .session-tabs           { display: none !important; }
+  .session-panel-hidden   { display: flex !important; }
+}
+
+/* ── Dashboard responsive grid ───────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .dashboard-grid { grid-template-columns: 1fr !important; }
+  .stats-grid     { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+  .stats-grid     { grid-template-columns: 1fr !important; }
+}

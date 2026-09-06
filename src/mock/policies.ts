@@ -1,0 +1,58 @@
+import type { Policy } from "../types";
+
+export const mockPolicies: Policy[] = [
+  {
+    id: "pol-001",
+    name: "Secret Access",
+    description: "Prevents agents from accessing known credential files (.env, secrets.yaml, *.pem).",
+    action: "block",
+    threshold: 90,
+    enabled: true,
+    match_patterns: [".env", "*.pem", "secrets.*", "credentials.*"],
+  },
+  {
+    id: "pol-002",
+    name: "Production Deployment",
+    description: "Requires human approval before deploying to any production environment.",
+    action: "ask",
+    threshold: 70,
+    enabled: true,
+    match_patterns: ["deploy:production", "deploy:prod"],
+  },
+  {
+    id: "pol-003",
+    name: "Protected Branch Push",
+    description: "Requires approval when pushing to main, master, or release branches.",
+    action: "ask",
+    threshold: 55,
+    enabled: true,
+    match_patterns: ["git_push:main", "git_push:master", "git_push:release/*"],
+  },
+  {
+    id: "pol-004",
+    name: "Destructive Filesystem Operations",
+    description: "Blocks delete, truncate, or recursive removal of files outside temp directories.",
+    action: "block",
+    threshold: 75,
+    enabled: true,
+    match_patterns: ["delete_file", "rm_rf", "truncate_file"],
+  },
+  {
+    id: "pol-005",
+    name: "Read Project Files",
+    description: "Automatically allows reading source files within the current project scope.",
+    action: "allow",
+    threshold: 0,
+    enabled: true,
+    match_patterns: ["read_file:*.py", "read_file:*.ts", "read_file:*.js"],
+  },
+  {
+    id: "pol-006",
+    name: "External Network Requests",
+    description: "Flags any outbound HTTP/HTTPS requests to external domains for review.",
+    action: "ask",
+    threshold: 50,
+    enabled: false,
+    match_patterns: ["http_request:external"],
+  },
+];
